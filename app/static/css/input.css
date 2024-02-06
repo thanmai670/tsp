@@ -1,0 +1,201 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    /* * {
+        @apply outline outline-1 outline-pink-200 
+    } */
+
+    /* Material Icons font styles */
+
+    @font-face {
+        font-family: "Material Icons";
+        font-style: normal;
+        font-weight: 400;
+        src: local("Material Icons"), local("MaterialIcons-Regular"),
+            url(../fonts/MaterialIcons-Regular.woff2) format("woff2"),
+            url(../fonts/MaterialIcons-Regular.ttf) format("truetype");
+    }
+
+    .material-icons {
+        font-family: "Material Icons";
+        font-weight: normal;
+        font-style: normal;
+        font-size: 24px;
+        /* preferred icon size */
+        display: inline-block;
+        line-height: 1;
+        text-transform: none;
+        letter-spacing: normal;
+        word-wrap: normal;
+        white-space: nowrap;
+        direction: ltr;
+
+        /* Support for all WebKit browsers. */
+        -webkit-font-smoothing: antialiased;
+
+        /* Support for Safari and Chrome. */
+        text-rendering: optimizeLegibility;
+
+        /* Support for Firefox. */
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    .material-icons.icon-sm,
+    .line-icons.icon-sm {
+        font-size: 18px;
+    }
+
+    .material-icons.icon-base,
+    .line-icons.icon-base {
+        font-size: 24px;
+    }
+
+    .material-icons.icon-lg,
+    .line-icons.icon-lg {
+        font-size: 36px;
+    }
+
+    .material-icons.icon-xl,
+    .line-icons.icon-xl {
+        font-size: 48px;
+    }
+}
+
+@layer components {
+    .car-container {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 10px;
+        width: 850px;
+        border-radius: 8px;
+        padding: 15px 10px 15px 30px;
+        background-color: #e9ecef;
+    }
+
+    .item {
+        @apply w-[70px] h-[70px] bg-white flex items-center justify-center p-1 rounded-md;
+        transition: transform 0.3s ease;
+    }
+
+    .item.dragging {
+        transform: scale(1.2);
+    }
+
+    #item-placeholder {
+        width: 10px;
+        height: 70px;
+    }
+
+    .btn-toolbar {
+        @apply flex space-x-2 my-5;
+    }
+
+    /***** MODAL DIALOG ****/
+    /* from https://htmx.org/examples/modal-custom/ */
+    #confirm-modal {
+        /* Underlay covers entire screen. */
+        position: fixed;
+        top: 0px;
+        bottom: 0px;
+        left: 0px;
+        right: 0px;
+        background-color: rgba(0, 0, 0, 0.3);
+        z-index: 1000;
+
+        /* Flexbox centers the .modal-content vertically and horizontally */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        /* Animate when opening */
+        animation-name: fadeIn;
+        animation-duration: 150ms;
+        animation-timing-function: ease;
+    }
+
+    #confirm-modal > .modal-underlay {
+        /* underlay takes up the entire viewport. This is only required if you want to click to dismiss the popup */
+        position: absolute;
+        z-index: -1;
+        top: 0px;
+        bottom: 0px;
+        left: 0px;
+        right: 0px;
+    }
+
+    #confirm-modal > .modal-content {
+        /* Position visible dialog near the top of the window */
+        margin-top: 10vh;
+
+        /* Sizing for visible dialog */
+        width: 80%;
+        max-width: 600px;
+
+        /* Display properties for visible dialog*/
+        border-radius: 8px;
+        box-shadow: 0px 0px 20px 0px rgba(0, 0, 0, 0.3);
+        background-color: white;
+        padding: 20px;
+
+        /* Animate when opening */
+        animation-name: zoomIn;
+        animation-duration: 150ms;
+        animation-timing-function: ease;
+    }
+
+    #confirm-modal.closing {
+        /* Animate when closing */
+        animation-name: fadeOut;
+        animation-duration: 150ms;
+        animation-timing-function: ease;
+    }
+
+    #confirm-modal.closing > .modal-content {
+        /* Animate when closing */
+        animation-name: zoomOut;
+        animation-duration: 150ms;
+        animation-timing-function: ease;
+    }
+
+    @keyframes fadeIn {
+        0% {
+            opacity: 0;
+        }
+
+        100% {
+            opacity: 1;
+        }
+    }
+
+    @keyframes fadeOut {
+        0% {
+            opacity: 1;
+        }
+
+        100% {
+            opacity: 0;
+        }
+    }
+
+    @keyframes zoomIn {
+        0% {
+            transform: scale(0.9);
+        }
+
+        100% {
+            transform: scale(1);
+        }
+    }
+
+    @keyframes zoomOut {
+        0% {
+            transform: scale(1);
+        }
+
+        100% {
+            transform: scale(0.9);
+        }
+    }
+}

@@ -1,0 +1,664 @@
+{% extends 'base.html' %} {% block head %}
+<head>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+  />
+</head>
+
+
+
+{% endblock %} {% block content %}
+<div
+  id="config-modal"
+  tabindex="-1"
+  style="display: none"
+  class="text-gray-800 fixed backdrop-blur-sm top-0 left-0 right-0 z-10 w-full p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-[calc(100%-1rem)] max-h-full"
+>
+  <div class="relative w-full max-w-hull max-h-full">
+    <!-- Modal content -->
+
+    <div class="relative bg-white rounded-lg shadow">
+      <!-- Modal header -->
+      <div class="flex items-center justify-between p-5 rounded-t">
+        <h3 class="text-3xl font-bold">Configuration</h3>
+        <button
+          type="button"
+          id="close-config-modal-btn"
+          class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ml-auto inline-flex justify-center items-center"
+        >
+          <svg
+            class="w-3 h-3"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 14 14"
+          >
+            <path
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"
+            />
+          </svg>
+          <span class="sr-only">Close modal</span>
+        </button>
+      </div>
+      <hr class="h-px mx-5 bg-gray-200 border-0" />
+      <!-- Modal body -->
+      <div id="config-body" class="p-6 space-y-6">
+        <p>
+          Configure your Travelling Salesman Problem by using the drop down on
+          the left to select the cities that you want to add to your problem.
+          once you select a city you can click on add city node to add the city
+          to your problem. Eventually after adding all your cities you can click
+          on submit to submit your problem to the platform.
+        </p>
+
+        <div id="map-container">
+          <div id="map"></div>
+        </div>
+
+        <div id="sidebar">
+          <h3>Select a City</h3>
+          <select id="city-selector">
+            <option value="">--Select a City--</option>
+            <option value="Berlin">Berlin</option>
+            <option value="Munich">Munich</option>
+            <option value="Hamburg">Hamburg</option>
+            <option value="Cologne">Cologne</option>
+            <option value="Frankfurt">Frankfurt</option>
+            <option value="Stuttgart">Stuttgart</option>
+            <option value="Düsseldorf">Düsseldorf</option>
+            <option value="Dortmund">Dortmund</option>
+            <option value="Essen">Essen</option>
+            <option value="Leipzig">Leipzig</option>
+          </select>
+          <button
+            id="add-city-node"
+            class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 p-5"
+          >
+            Add City Node
+          </button>
+          <h3>City Nodes</h3>
+          <table id="cities-table">
+            <tbody></tbody>
+          </table>
+
+         
+        </div>
+        <!-- Modal footer -->
+        <div class="flex items-center p-6 space-x-2 border-gray-200 rounded-b">
+          <button
+            id="Done-btn"
+            type="button"
+            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
+          >
+            Done
+          </button>
+          <button
+            type="button"
+            class="text-gray-500 bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-200 rounded-full border border-gray-200 font-bold px-4 py-2.5 hover:text-gray-900 focus:z-10"
+            _="on click hide #config-modal"
+          >
+            Back to Documentation
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for confirming the submit of the configured problem -->
+  <div
+    id="confirm-modal"
+    style="display: none"
+    class="fixed backdrop-blur-sm top-0 left-0 right-0 z-20"
+  >
+    <div class="modal-content">
+      <!-- Modal header -->
+      <div class="flex items-center justify-between p-5 rounded-t">
+        <h3 class="text-3xl font-bold">Submit Configuration</h3>
+        <button
+          type="button"
+          class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ml-auto inline-flex justify-center items-center"
+          _="on click call closeConfirmModal()"
+        >
+          <svg
+            class="w-3 h-3"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 14 14"
+          >
+            <path
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"
+            />
+          </svg>
+          <span class="sr-only">Close modal</span>
+        </button>
+      </div>
+      <!-- Modal body -->
+      <div class="p-6 space-y-6 bg-white">
+        <p>
+          Your city nodes are about to be submitted. If you want to make changes
+          press "Close", otherwise press "Submit" to continue.
+        </p>
+        <h3 class="text-lg font-semibold">Selected City Nodes</h3>
+        <div
+          class="bg-gray-100 p-4 rounded-lg border border-gray-300 overflow-y-auto"
+        >
+          <output id="city-nodes" class="overflow-y-auto max-h-64"></output>
+        </div>
+        <h3 class="text-lg font-semibold">QUBO Matrix</h3>
+        <div
+          class="bg-gray-100 p-4 rounded-lg border border-gray-300 overflow-y-auto"
+        >
+          <output id="qubo-content" class="overflow-y-auto max-h-64"></output>
+        </div>
+      </div>
+      <!-- Modal footer -->
+      <div
+        class="flex items-center p-6 space-x-2 border-t border-gray-200 rounded-b"
+      >
+        <button
+          id="submit-btn"
+          type="button"
+          class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
+        >
+          Submit
+        </button>
+        <button
+          type="button"
+          id="close-btn"
+          class="text-gray-500 bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-200 rounded-full border border-gray-200 font-bold px-4 py-2.5 hover:text-gray-900 focus:z-10"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+      window.addEventListener("configModalShown",function(){
+        setTimeout(function () {
+          initializeMap();
+        }, 0);
+        
+      })
+
+      var map;
+      var markers = {};
+      var polylines = [];
+      var cityCoordinates = {
+        Berlin: [52.52, 13.405],
+        Munich: [48.1351, 11.582],
+        Hamburg: [53.5511, 9.9937],
+        Cologne: [50.9375, 6.9603],
+        Frankfurt: [50.1109, 8.6821],
+        Stuttgart: [48.7758, 9.1829],
+        Düsseldorf: [51.2277, 6.7735],
+        Dortmund: [51.5139, 7.4653],
+        Essen: [51.4566, 7.0128],
+        Leipzig: [51.3397, 12.3731],
+      };
+
+      function initializeMap() {
+        if (map) {
+          map.off();
+          map.remove();
+        }
+        map = L.map("map").setView([51.1657, 10.4515], 5);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "© OpenStreetMap contributors",
+          maxZoom: 19,
+        }).addTo(map);
+
+        // Reset markers and polylines
+        markers = {};
+        polylines.forEach(function (polyline) {
+          map.removeLayer(polyline);
+        });
+        polylines = [];
+      }
+
+      initializeMap();
+      setTimeout(function () {
+        map.invalidateSize();
+      }, 800);
+
+      function updateCitiesTable() {
+        var tableBody = document
+          .getElementById("cities-table")
+          .querySelector("tbody");
+        tableBody.innerHTML = "";
+
+        Object.keys(markers).forEach(function (city) {
+          var row = tableBody.insertRow();
+
+          var nameCell = row.insertCell();
+          nameCell.textContent = city;
+
+          var deleteCell = row.insertCell();
+          var deleteBtn = document.createElement("button");
+          deleteBtn.innerHTML =
+            '<svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="24" height="24" viewBox="0 0 24 24"><path d="M 10.806641 2 C 10.289641 2 9.7956875 2.2043125 9.4296875 2.5703125 L 9 3 L 4 3 A 1.0001 1.0001 0 1 0 4 5 L 20 5 A 1.0001 1.0001 0 1 0 20 3 L 15 3 L 14.570312 2.5703125 C 14.205312 2.2043125 13.710359 2 13.193359 2 L 10.806641 2 z M 4.3652344 7 L 5.8925781 20.263672 C 6.0245781 21.253672 6.877 22 7.875 22 L 16.123047 22 C 17.121047 22 17.974422 21.254859 18.107422 20.255859 L 19.634766 7 L 4.3652344 7 z"></path></svg>';
+
+          deleteBtn.onclick = function () {
+            map.removeLayer(markers[city]);
+            delete markers[city];
+            updateCitiesTable();
+            updateCityDistances();
+            redrawLines();
+          };
+          deleteCell.appendChild(deleteBtn);
+        });
+      }
+
+      function redrawLines() {
+        // Remove existing lines
+        polylines.forEach(function (line) {
+          map.removeLayer(line);
+        });
+        polylines = [];
+
+        // Get all marker positions
+        var latLngs = Object.values(markers).map(function (marker) {
+          return marker.getLatLng();
+        });
+
+        // Draw lines between each pair of cities
+        for (let i = 0; i < latLngs.length; i++) {
+          for (let j = i + 1; j < latLngs.length; j++) {
+            var line = L.polyline([latLngs[i], latLngs[j]], {
+              color: "blue",
+            }).addTo(map);
+            polylines.push(line);
+          }
+        }
+      }
+
+      function updateCityDistances() {
+        cityDistances = {}; // Reset distances
+
+        var cityNames = Object.keys(markers);
+        for (let i = 0; i < cityNames.length; i++) {
+          for (let j = i + 1; j < cityNames.length; j++) {
+            var city1 = cityNames[i];
+            var city2 = cityNames[j];
+            var distance = markers[city1]
+              .getLatLng()
+              .distanceTo(markers[city2].getLatLng());
+            var key = city1 + "-" + city2;
+            cityDistances[key] = distance;
+          }
+        }
+
+        // For demonstration: Log the distances to the console
+        console.log(cityDistances);
+      }
+
+      function addMarker(city) {
+        var marker = L.marker(cityCoordinates[city]).addTo(map);
+        marker.bindPopup(createPopupContent(city), { closeButton: false });
+
+        marker.on("click", function (e) {
+          this.openPopup();
+        });
+
+        markers[city] = marker;
+        updateCityDistances();
+      }
+
+      function createPopupContent(city) {
+        var container = document.createElement("div");
+        var closeButton = document.createElement("button");
+        closeButton.innerHTML = "x";
+        closeButton.style.cssText = "position: absolute; top: 0; right: 0;";
+        closeButton.onclick = function (e) {
+          e.stopPropagation(); // Prevent the map click event
+          markers[city].closePopup();
+        };
+        container.appendChild(closeButton);
+
+        var info = document.createElement("span");
+        info.innerHTML = city;
+        container.appendChild(info);
+
+        var removeButton = document.createElement("button");
+        removeButton.innerHTML = "Remove";
+        removeButton.onclick = function () {
+          removeCityNode(city);
+        };
+        container.appendChild(removeButton);
+
+        return container;
+      }
+
+      function getGraphData() {
+        var nodes = Object.keys(markers);
+        var edges = [];
+
+        for (let i = 0; i < nodes.length; i++) {
+          for (let j = i + 1; j < nodes.length; j++) {
+            var city1 = nodes[i];
+            var city2 = nodes[j];
+            var distance = markers[city1]
+              .getLatLng()
+              .distanceTo(markers[city2].getLatLng());
+            edges.push({
+              from_city: city1,
+              to_city: city2,
+              weight: distance,
+            });
+          }
+        }
+
+        return { nodes, edges };
+      }
+
+      function sendGraphDataToBackend() {
+        var graphData = getGraphData();
+        console.log("sendGraphDataToBackend called");
+        fetch("http://localhost:8000/api/qubo", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(graphData),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            updateQuboModal(data.qubo);
+            sendToParent(data.qubo);
+            localStorage.setItem(
+              "dist_matrix",
+              JSON.stringify(data.dist_matrix)
+            );
+            localStorage.setItem("graphData", JSON.stringify(graphData));
+          })
+          .catch((error) => console.error("Error:", error));
+      }
+
+      function removeCityNode(city) {
+        if (markers[city]) {
+          map.removeLayer(markers[city]);
+          delete markers[city];
+          updateCitiesTable();
+          redrawLines();
+        }
+      }
+
+      var markers = {};
+      var polylines = [];
+
+      document
+        .getElementById("add-city-node")
+        .addEventListener("click", function () {
+          var city = document.getElementById("city-selector").value;
+          if (city && cityCoordinates[city]) {
+            if (tempMarker) {
+              map.removeLayer(tempMarker);
+              tempMarker = null;
+            }
+
+            if (!markers[city]) {
+              addMarker(city);
+            }
+
+            polylines.forEach(function (line) {
+              map.removeLayer(line);
+            });
+            polylines = [];
+
+            var latLngs = Object.values(markers).map(function (marker) {
+              return marker.getLatLng();
+            });
+
+            for (let i = 0; i < latLngs.length; i++) {
+              for (let j = i + 1; j < latLngs.length; j++) {
+                var line = L.polyline([latLngs[i], latLngs[j]], {
+                  color: "blue",
+                }).addTo(map);
+                polylines.push(line);
+              }
+            }
+
+            map.flyTo([51.1657, 10.4515], 6);
+            updateCitiesTable();
+          }
+        });
+      var tempMarker = null;
+
+      document
+        .getElementById("city-selector")
+        .addEventListener("change", function (e) {
+          var city = e.target.value;
+          if (city && cityCoordinates[city]) {
+            if (tempMarker) {
+              map.removeLayer(tempMarker);
+            }
+
+            tempMarker = L.marker(cityCoordinates[city]).addTo(map);
+
+            map.flyTo(cityCoordinates[city], 10);
+          }
+        });
+
+      var resetControl = L.control({ position: "topleft" });
+
+      resetControl.onAdd = function (map) {
+        var div = L.DomUtil.create(
+          "div",
+          "leaflet-bar leaflet-control leaflet-control-custom"
+        );
+        div.innerHTML =
+          '<button style="background-color: #fff; border: none; cursor: pointer;">Reset</button>';
+        div.onclick = function () {
+          map.flyTo([51.1657, 10.4515], 6);
+        };
+        return div;
+      };
+
+      resetControl.addTo(map);
+
+      // var solutionMarkers = [];
+      // var solutionPath;
+
+      // function drawSolutionPath(order) {
+      //   if (solutionPath) {
+      //     map.removeLayer(solutionPath);
+      //   }
+      //   solutionMarkers.forEach((marker) => map.removeLayer(marker));
+      //   solutionMarkers = [];
+
+      //   polylines.forEach((line) => map.removeLayer(line));
+      //   polylines = [];
+
+      //   var pathCoordinates = order
+      //     .map((cityName) => {
+      //       if (!cityCoordinates[cityName]) {
+      //         console.error("City not found in coordinates:", cityName);
+      //         return null;
+      //       }
+      //       return cityCoordinates[cityName];
+      //     })
+      //     .filter((coord) => coord !== null);
+
+      //   if (pathCoordinates.length > 0) {
+      //     pathCoordinates.push(pathCoordinates[0]);
+      //   }
+
+      //   solutionPath = L.polyline(pathCoordinates, { color: "green" }).addTo(map);
+
+      //   order.forEach((cityName, index) => {
+      //     if (!cityCoordinates[cityName]) return;
+
+      //     var marker = L.marker(cityCoordinates[cityName])
+      //       .bindTooltip((index + 1).toString(), {
+      //         permanent: true,
+      //         direction: "right",
+      //       })
+      //       .addTo(map);
+      //     solutionMarkers.push(marker);
+      //   });
+      // }
+
+      // function displaySolutionDetails(data) {
+      //   var solutionDiv = document.getElementById("solution-details");
+      //   solutionDiv.innerHTML = "<h3>Solution Details</h3>";
+
+      //   var order =
+      //     "<p><strong>Order of Traversal:</strong><br>" +
+      //     data.order.join(", ") +
+      //     "</p>";
+      //   var totalDistance =
+      //     "<p><strong>Total Distance:</strong> " + data.total_distance + "</p>";
+
+      //   solutionDiv.innerHTML += order + totalDistance;
+      // }
+
+      // document
+      //   .getElementById("solution")
+      //   .addEventListener("click", function () {
+      //     fetch("http://localhost:8000/api/qubo", {
+      //       method: "POST",
+      //       headers: {
+      //         "Content-Type": "application/json",
+      //       },
+      //       body: JSON.stringify(getGraphData()),
+      //     })
+      //       .then((response) => response.json())
+      //       .then((data) => {
+      //         console.log("QUBO Solution:", data.order);
+      //         drawSolutionPath(data.order);
+      //         displaySolutionDetails(data);
+      //       })
+      //       .catch((error) => console.error("Error:", error));
+      //   });
+
+      function displayQuboModal() {
+        var modal = document.getElementById("confirm-modal");
+        var cityNodes = document.getElementById("city-nodes");
+        cityNodes.textContent = Object.keys(markers).join(", ");
+        localStorage.setItem("cityNodes", JSON.stringify(Object.keys(markers)));
+        modal.style.display = "block";
+        console.log("displayQuboModal called");
+      }
+
+      document
+        .getElementById("Done-btn")
+        .addEventListener("click", function (e) {
+          displayQuboModal();
+          console.log("Done-btn clicked");
+        });
+
+      function updateQuboModal(data) {
+        var quboContent = document.getElementById("qubo-content");
+        quboContent.textContent = JSON.stringify(data, null, 2);
+      }
+      function openConfirmModal() {
+        var modal = document.getElementById("confirm-modal");
+        modal.style.display = "block";
+      }
+
+      function closeConfirmModal() {
+        var modal = document.getElementById("confirm-modal");
+        modal.style.display = "none";
+      }
+
+      document
+        .querySelector("#confirm-modal #submit-btn")
+        .addEventListener("click", function () {
+          sendGraphDataToBackend();
+        });
+
+      document
+        .querySelector("#confirm-modal #close-btn")
+        .addEventListener("click", function () {
+          closeConfirmModal();
+        });
+
+      function sendToParent(data) {
+        console.log("sendToParent called");
+        const requestMsg = {
+          id: "123",
+          kind: "msg",
+          request: "process_workload",
+          data: {
+            config: {
+              city_nodes: Object.keys(markers),
+            },
+            workload: {
+              type: "qubo",
+              qubo: data,
+            },
+          },
+        };
+
+        window.parent.postMessage(requestMsg, "http://localhost:8000");
+        // window.parent.postMessage(requestMsg, "https://qucun-bps-app.azurewebsites.net");
+        // window.parent.postMessage(requestMsg, "https://qucun.azurewebsites.net");
+      }
+
+      document
+        .getElementById("close-config-modal-btn")
+        .addEventListener("click", function () {
+          // if (map) {
+          //   map.off();
+          //   map.remove();
+          //   map = null; // Ensure the map is set to null
+          // }
+          document.getElementById("config-modal").style.display = "none";
+        });
+    });
+  </script>
+  <style>
+    #map {
+      position: absolute;
+      bottom: 10px;
+      right: 20px;
+      width: 70%;
+      height: 70%;
+      border-radius: 3%;
+      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+      top: 170px;
+      order: 1;
+      z-index: 1;
+    }
+    #sidebar {
+      display: flex;
+      width: 315px;
+      flex-direction: column;
+      width: 25%;
+      background-color: #f8f9fa;
+      /* z-index: 2; */
+      overflow-y: auto;
+      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+      padding: 20px;
+      height: 620px;
+      margin-bottom: 10px;
+      order: 2;
+    }
+    #sidebar h3 {
+      margin-top: 0;
+      color: #333;
+      font-size: 1.2em;
+    }
+    #sidebar select {
+      margin-bottom: 10px;
+      padding: 5px;
+      border-radius: 3px;
+      border: 1px solid #ccc;
+      font-size: 1em;
+    }
+  </style>
+
+  {% endblock %}
+</div>

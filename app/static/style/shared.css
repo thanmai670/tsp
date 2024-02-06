@@ -1,0 +1,13 @@
+/* This file contains custom CSS that is shared between all templates of the repository. */
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    padding: 20px
+}
+
+.btn-toolbar {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}

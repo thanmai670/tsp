@@ -1,0 +1,44 @@
+[project]
+name = "qucun_app"
+version = "0.0.1"
+authors = [
+  { name="Antonia Halbig", email="antonia.halbig@aqarios.com" },
+  { name="Arnold Unterauer", email="arnold.unterauer@aqarios.com" },
+]
+description = "QuCUN Use Case Application"
+readme = "README.md"
+requires-python = ">=3.9, <3.11"
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+
+[project.urls]
+"Homepage" = "https://www.qucun.de/"
+"Git Repository" = "https://github.com/QuCUN/use-case-template"
+
+[tool.poetry]
+name = "qucun-app"
+version = "0.0.1"
+description = ""
+authors = [
+    "Antonia Halbig <antonia.halbig@aqarios.com>",
+    "Arnold Unterauer <arnold.unterauer@aqarios.com>"
+]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.9, <3.11"
+fastapi = "^0.103.2"
+uvicorn = "^0.23.2"
+dimod = "^0.12.12"
+python-multipart = "^0.0.6"
+jinja2 = "^3.1.2"
+numpy = "^1.26.0"
+httpx = "^0.25.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.3.1"
+
+[build-system]
+requires = ["poetry-core>=1.0.0", "setuptools>=61.0"]
+build-backend = "setuptools.build_meta"

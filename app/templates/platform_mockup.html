@@ -1,0 +1,98 @@
+{% extends 'base.html' %} {% block head %}
+<!-- Call super to load head content of parent html file. -->
+{{ super() }}
+
+<!-- You can load additional css or javascript files that are only used for this html file here. -->
+
+{% endblock %} {% block content %}
+<!-- Put the actual html content of this template in this block here. -->
+<div id="platform-body">
+  <h3 class="mb-5 text-3xl font-bold">Platform Mockup</h3>
+
+  <div class="btn-toolbar">
+    <!-- Buttons with tailwind styling and hypersript code (_="..") to call iframe communication functions. -->
+
+    <button
+      type="button"
+      id="configure-btn"
+      class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none"
+    >
+      Configure
+    </button>
+
+    <button
+      type="button"
+      id="show-solution-btn"
+      class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none"
+    >
+      Show Solution
+    </button>
+  </div>
+
+  <!-- TODO: The "src" attribute needs to be customised to the actual URL of your use case. -->
+  <iframe
+    id="uc-mockup"
+    src={{ iframe_url }}
+    title="Use Case Window"
+    height="1000"
+    width="1500"
+  >
+  </iframe>
+ 
+</div>
+<script>
+  window.addEventListener("message", function(event) { 
+            console.log("Message received from the iframe: " + event.data); 
+            if (event.data["request"] == "process_workload") {
+                // console.log("Received QUBO: " + event.data.data.workload.qubo);
+            }
+        });
+
+  function solution() {
+    dist_matrix = localStorage.getItem("dist_matrix");
+    graphData = localStorage.getItem("graphData");
+
+    const requestMsg = {
+      id: "123",
+      kind: "msg",
+      request: "show_result",
+      data: {
+        config: {
+          dist_matrix: dist_matrix,
+        },
+        result: {
+          samples: [[1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0]],
+          graphData: graphData,
+        },
+      },
+    };
+
+    const iframe = document.querySelector("iframe");
+    iframe.contentWindow.postMessage(requestMsg, "*");
+    console.log("event dispatched")
+  }
+
+  function configure() {
+    const requestMsg = {
+      id: "123",
+      kind: "msg",
+      request: "create_workload",
+    };
+
+    const iframe = document.querySelector("iframe");
+    iframe.contentWindow.postMessage(requestMsg, "*");
+  }
+
+  document
+    .getElementById("configure-btn")
+    .addEventListener("click", function () {
+      configure();
+    });
+
+  document
+    .getElementById("show-solution-btn")
+    .addEventListener("click", function () {
+      solution();
+    });
+</script>
+{% endblock %}

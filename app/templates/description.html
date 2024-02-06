@@ -1,0 +1,123 @@
+{% extends 'base.html' %} {% block head %}
+<!-- Call super to load head content of parent html file -->
+{{ super() }}
+
+<!-- You can load additional css or javascript files that are only used for this template file here -->
+
+<style>
+  /* Put styling for this template here */
+</style>
+
+{% endblock %} {% block content %}
+<!-- Put the actual html content of this template in this block here -->
+<div class="text-gray-800 flex flex-col gap-4">
+  <h3 class="pb-5 mb-5 text-3xl font-bold border-b">
+    Travelling Salesman Problem
+  </h3>
+  <div class="text-xl font-bold">Description</div>
+  <p>
+    The traveling salesperson problem (TSP) is a combinatorial optimization
+    problem that was first mentioned in a handbook for Salespersons in
+    Switzerland in 1832, showcasing the practical need for planning (business)
+    trips efficiently. A salesperson has to visit a given list of cities exactly
+    once before returning to the starting point again. The goal is to minimize
+    the aggregate distance (or time, fuel, etc.).
+  </p>
+  <div class="text-xl font-bold">Motivation</div>
+  <p>
+    In addition to finding the fastest route, the measure to optimize for can
+    also be changed to most fuel-efficient or least carbon emissions. For modern
+    organizations that try to use resources considerately, finding a schedule
+    that comes as close to the optimal solution is essential. The brute force
+    exact solution of trying all permutations however requires the examination
+    of more than the factorial of the number of cities to be visited (n!) and
+    becomes impractical already if there are more than 20 cities to be visited.
+  </p>
+  <div class="text-xl font-bold">State of the Art</div>
+  <p>
+    Various heuristics exist that provide very good approximate solutions. For
+    an exact solution, however, no algorithm has been found yet for which the
+    computation time doesn't increase exponentially with the number of cities.
+    This is also true for quantum algorithms. Quantum annealing is however a
+    promising way to speed up the search for approximate solutions, as pointed
+    out in [1].
+  </p>
+  <div class="text-xl font-bold">Applications</div>
+  <p>
+    The TSP is a very popular topic in research due to its wide applicability.
+    Planning the routes of letter carriers and garbage collectors are similar
+    route planning tasks. It is furthermore used in manufacturing, for example
+    in designing machine assembly processes or microchip insertion into circuit
+    boards. With a slight modification, DNA sequencing can also be formulated as
+    a TSP.
+  </p>
+  <h3 class="pt-5 font-bold border-t">Sources</h3>
+  <p class="text-sm">
+    [1] C. Papalitsas, T. Andronikos, K. Giannakis, G. Theocharopoulou, S.
+    Fanarioti, “A QUBO Model for the Traveling Salesman Problem with Time
+    Windows”, 2019.
+  </p>
+</div>
+<script>
+  const validOrigins = [
+    "http://localhost:8000", // local
+    "http://localhost:8002", // local
+    "https://qucun-bps-app.azurewebsites.net", // staging
+    "https://qucun.azurewebsites.net", // staging and production
+  ];
+
+  window.addEventListener("message", function (event) {
+    if (validOrigins.includes(event.origin)) {
+      console.log(
+        "Message type received from the parent: " + event.data["request"]
+      );
+
+      if (event.data["kind"] == "msg") {
+        if (event.data["request"] == "show_result") {
+          console.log("Message received:", event.data);
+          openSolutionVis(event.data["data"]);
+        } else if (event.data["request"] == "create_workload") {
+          openConfigUi();
+        }
+      }
+    } else {
+      console.log("Unknown event origin: " + event.origin);
+    }
+  });
+
+  async function openSolutionVis(data) {
+    try {
+      const response = await fetch("/tsp/solution", {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      const solutionData = await response.json();  
+      const final_sol = JSON.stringify(solutionData);
+      showSolutionModal(solutionData);
+      console.log(solutionData);
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  }
+
+  function openConfigUi() {
+    document.getElementById("solution-modal").style.display = "none";
+    document.getElementById("config-modal").style.display = "block";
+    window.dispatchEvent(new CustomEvent("configModalShown"));
+  }
+
+  function showSolutionModal(solutionData) {
+    document.getElementById('config-modal').style.display = 'contents';
+    window.dispatchEvent(new CustomEvent('showSolutionModal',{detail:solutionData}));
+    
+}
+</script>
+
+{% include "config_modal.html" %} {% include "solution_modal.html" %} {%
+endblock %}
